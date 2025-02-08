@@ -1,140 +1,153 @@
 #include "scheduler.h"
 #include <iostream>
 #include <algorithm>
-#include <climits>  // For INT_MAX
-#include <queue>    // For queue in RR
+#include <queue>
 
-// FCFS constructor
-FCFS::FCFS() {}
+using namespace std;
 
-// FCFS scheduling algorithm
-void FCFS::schedule(std::vector<Process>& processes) {
-    std::sort(processes.begin(), processes.end(),
-              [](const Process& a, const Process& b) { return a.arrival_time < b.arrival_time; });
+// FCFS Algorithm
+void FCFS::schedule(vector<Process>& processes) {
+    sort(processes.begin(), processes.end(), [](const Process& a, const Process& b) {
+        return a.getArrivalTime() < b.getArrivalTime();
+    });
 
     int current_time = 0;
     for (auto& process : processes) {
-        waiting_times.push_back(current_time - process.arrival_time);
-        current_time += process.burst_time;
-        turnaround_times.push_back(current_time - process.arrival_time);
-        gantt_chart.emplace_back(process.id, current_time);
+        process.setWaitingTime(current_time - process.getArrivalTime());
+        process.setTurnaroundTime(process.getWaitingTime() + process.getBurstTime());
+        current_time += process.getBurstTime();
     }
 }
 
-// SJF constructor
-SJF::SJF() {}
+void FCFS::printMetrics(const vector<Process>& processes) {
+    int total_waiting_time = 0;
+    int total_turnaround_time = 0;
+    for (const auto& process : processes) {
+        total_waiting_time += process.getWaitingTime();
+        total_turnaround_time += process.getTurnaroundTime();
+    }
+    cout << "FCFS - Average Waiting Time: " << total_waiting_time / processes.size() << endl;
+    cout << "FCFS - Average Turnaround Time: " << total_turnaround_time / processes.size() << endl;
+}
 
-// SJF scheduling algorithm
-void SJF::schedule(std::vector<Process>& processes) {
-    std::sort(processes.begin(), processes.end(),
-              [](const Process& a, const Process& b) { return a.arrival_time < b.arrival_time; });
+void FCFS::printGanttChart(const vector<Process>& processes) {
+    for (const auto& process : processes) {
+        cout << "Process ID: " << process.getId() 
+             << " | Waiting Time: " << process.getWaitingTime() 
+             << " | Turnaround Time: " << process.getTurnaroundTime() << endl;
+    }
+}
+
+// SJF Algorithm
+void SJF::schedule(vector<Process>& processes) {
+    sort(processes.begin(), processes.end(), [](const Process& a, const Process& b) {
+        return a.getBurstTime() < b.getBurstTime();
+    });
 
     int current_time = 0;
-    size_t completed = 0;
-    std::vector<bool> executed(processes.size(), false);
-
-    while (completed < processes.size()) {
-        int shortest_index = -1;
-        int shortest_burst = INT_MAX;
-
-        for (size_t i = 0; i < processes.size(); i++) {
-            if (!executed[i] && processes[i].arrival_time <= current_time && processes[i].burst_time < shortest_burst) {
-                shortest_burst = processes[i].burst_time;
-                shortest_index = i;
-            }
-        }
-
-        if (shortest_index != -1) {
-            executed[shortest_index] = true;
-            completed++;
-            waiting_times.push_back(current_time - processes[shortest_index].arrival_time);
-            current_time += processes[shortest_index].burst_time;
-            turnaround_times.push_back(current_time - processes[shortest_index].arrival_time);
-            gantt_chart.emplace_back(processes[shortest_index].id, current_time);
-        } else {
-            current_time++;
-        }
+    for (auto& process : processes) {
+        process.setWaitingTime(current_time - process.getArrivalTime());
+        process.setTurnaroundTime(process.getWaitingTime() + process.getBurstTime());
+        current_time += process.getBurstTime();
     }
 }
 
-// RR constructor
-RR::RR(int quantum) : quantum(quantum) {}
+void SJF::printMetrics(const vector<Process>& processes) {
+    int total_waiting_time = 0;
+    int total_turnaround_time = 0;
+    for (const auto& process : processes) {
+        total_waiting_time += process.getWaitingTime();
+        total_turnaround_time += process.getTurnaroundTime();
+    }
+    cout << "SJF - Average Waiting Time: " << total_waiting_time / processes.size() << endl;
+    cout << "SJF - Average Turnaround Time: " << total_turnaround_time / processes.size() << endl;
+}
 
-// Round Robin scheduling algorithm
-void RR::schedule(std::vector<Process>& processes) {
-    std::queue<Process*> ready_queue;
+void SJF::printGanttChart(const vector<Process>& processes) {
+    for (const auto& process : processes) {
+        cout << "Process ID: " << process.getId() 
+             << " | Waiting Time: " << process.getWaitingTime() 
+             << " | Turnaround Time: " << process.getTurnaroundTime() << endl;
+    }
+}
+
+// Priority Scheduling Algorithm
+void PriorityScheduling::schedule(vector<Process>& processes) {
+    sort(processes.begin(), processes.end(), [](const Process& a, const Process& b) {
+        return a.getPriority() < b.getPriority();
+    });
+
     int current_time = 0;
-    size_t completed = 0;
+    for (auto& process : processes) {
+        process.setWaitingTime(current_time - process.getArrivalTime());
+        process.setTurnaroundTime(process.getWaitingTime() + process.getBurstTime());
+        current_time += process.getBurstTime();
+    }
+}
 
-    std::vector<bool> executed(processes.size(), false);
-    std::vector<int> remaining_burst(processes.size());
+void PriorityScheduling::printMetrics(const vector<Process>& processes) {
+    int total_waiting_time = 0;
+    int total_turnaround_time = 0;
+    for (const auto& process : processes) {
+        total_waiting_time += process.getWaitingTime();
+        total_turnaround_time += process.getTurnaroundTime();
+    }
+    cout << "Priority Scheduling - Average Waiting Time: " << total_waiting_time / processes.size() << endl;
+    cout << "Priority Scheduling - Average Turnaround Time: " << total_turnaround_time / processes.size() << endl;
+}
 
-    // Copy burst time for each process as remaining burst time
-    for (size_t i = 0; i < processes.size(); i++) {
-        remaining_burst[i] = processes[i].burst_time;
+void PriorityScheduling::printGanttChart(const vector<Process>& processes) {
+    for (const auto& process : processes) {
+        cout << "Process ID: " << process.getId() 
+             << " | Waiting Time: " << process.getWaitingTime() 
+             << " | Turnaround Time: " << process.getTurnaroundTime() << endl;
+    }
+}
+
+// Round Robin Scheduling Algorithm
+RoundRobin::RoundRobin(int time_quantum) : time_quantum(time_quantum) {}
+
+void RoundRobin::schedule(vector<Process>& processes) {
+    queue<Process*> ready_queue;
+    int current_time = 0;
+
+    for (auto& process : processes) {
+        process.setRemainingTime(process.getBurstTime());
+        ready_queue.push(&process);
     }
 
-    // Main Round Robin loop
-    while (completed < processes.size()) {
-        for (size_t i = 0; i < processes.size(); i++) {
-            if (processes[i].arrival_time <= current_time && !executed[i]) {
-                ready_queue.push(&processes[i]);
-            }
-        }
+    while (!ready_queue.empty()) {
+        Process* process = ready_queue.front();
+        ready_queue.pop();
 
-        if (!ready_queue.empty()) {
-            Process* current_process = ready_queue.front();
-            ready_queue.pop();
-
-            // If the remaining burst time of this process is less than or equal to quantum, it completes
-            int execution_time = std::min(quantum, remaining_burst[current_process->id - 1]);
-            remaining_burst[current_process->id - 1] -= execution_time;
-            current_time += execution_time;
-
-            // Add to Gantt chart
-            gantt_chart.emplace_back(current_process->id, current_time);
-
-            // If process is completed, record its waiting and turnaround times
-            if (remaining_burst[current_process->id - 1] == 0) {
-                executed[current_process->id - 1] = true;
-                completed++;
-                waiting_times.push_back(current_time - current_process->arrival_time - current_process->burst_time);
-                turnaround_times.push_back(current_time - current_process->arrival_time);
-            }
-
-            // If the process still has burst time left, add it back to the queue
-            if (remaining_burst[current_process->id - 1] > 0) {
-                ready_queue.push(current_process);
-            }
+        if (process->getRemainingTime() > time_quantum) {
+            process->setRemainingTime(process->getRemainingTime() - time_quantum);
+            current_time += time_quantum;
+            ready_queue.push(process);
         } else {
-            // No process available, increment time
-            current_time++;
+            current_time += process->getRemainingTime();
+            process->setWaitingTime(current_time - process->getBurstTime() - process->getArrivalTime());
+            process->setTurnaroundTime(process->getWaitingTime() + process->getBurstTime());
+            process->setRemainingTime(0);
         }
     }
 }
 
-// Print Gantt Chart
-void Scheduler::printGanttChart() {
-    std::cout << "\nGantt Chart:\n";
-    for (const auto& entry : gantt_chart) {
-        std::cout << "P" << entry.first << " ";
+void RoundRobin::printMetrics(const vector<Process>& processes) {
+    int total_waiting_time = 0;
+    int total_turnaround_time = 0;
+    for (const auto& process : processes) {
+        total_waiting_time += process.getWaitingTime();
+        total_turnaround_time += process.getTurnaroundTime();
     }
-    std::cout << "\n";
+    cout << "Round Robin - Average Waiting Time: " << total_waiting_time / processes.size() << endl;
+    cout << "Round Robin - Average Turnaround Time: " << total_turnaround_time / processes.size() << endl;
 }
 
-// Print Metrics (Average Waiting Time and Turnaround Time)
-void Scheduler::printMetrics() {
-    double avg_waiting_time = 0.0;
-    double avg_turnaround_time = 0.0;
-
-    for (size_t i = 0; i < waiting_times.size(); i++) {
-        avg_waiting_time += waiting_times[i];
-        avg_turnaround_time += turnaround_times[i];
+void RoundRobin::printGanttChart(const vector<Process>& processes) {
+    for (const auto& process : processes) {
+        cout << "Process ID: " << process.getId() 
+             << " | Waiting Time: " << process.getWaitingTime() 
+             << " | Turnaround Time: " << process.getTurnaroundTime() << endl;
     }
-
-    avg_waiting_time /= waiting_times.size();
-    avg_turnaround_time /= turnaround_times.size();
-
-    std::cout << "Average Waiting Time: " << avg_waiting_time << "\n";
-    std::cout << "Average Turnaround Time: " << avg_turnaround_time << "\n";
 }

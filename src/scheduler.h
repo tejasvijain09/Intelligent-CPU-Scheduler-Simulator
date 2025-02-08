@@ -7,34 +7,45 @@
 class Scheduler {
 public:
     virtual void schedule(std::vector<Process>& processes) = 0;
-    void printGanttChart();
-    void printMetrics();
-
-protected:
-    std::vector<std::pair<int, int>> gantt_chart; // {process_id, end_time}
-    std::vector<int> waiting_times;
-    std::vector<int> turnaround_times;
+    virtual void printMetrics(const std::vector<Process>& processes) = 0;
+    virtual void printGanttChart(const std::vector<Process>& processes) = 0;
+    virtual ~Scheduler() = default;
 };
 
+// FCFS Scheduling Algorithm
 class FCFS : public Scheduler {
 public:
-    FCFS();
     void schedule(std::vector<Process>& processes) override;
+    void printMetrics(const std::vector<Process>& processes) override;
+    void printGanttChart(const std::vector<Process>& processes) override;
 };
 
+// SJF Scheduling Algorithm
 class SJF : public Scheduler {
 public:
-    SJF();
     void schedule(std::vector<Process>& processes) override;
+    void printMetrics(const std::vector<Process>& processes) override;
+    void printGanttChart(const std::vector<Process>& processes) override;
 };
 
-class RR : public Scheduler {
+// Priority Scheduling Algorithm
+class PriorityScheduling : public Scheduler {
 public:
-    RR(int quantum);
     void schedule(std::vector<Process>& processes) override;
+    void printMetrics(const std::vector<Process>& processes) override;
+    void printGanttChart(const std::vector<Process>& processes) override;
+};
+
+// Round Robin Scheduling Algorithm
+class RoundRobin : public Scheduler {
+public:
+    RoundRobin(int time_quantum);
+    void schedule(std::vector<Process>& processes) override;
+    void printMetrics(const std::vector<Process>& processes) override;
+    void printGanttChart(const std::vector<Process>& processes) override;
 
 private:
-    int quantum;  // Time quantum for round robin scheduling
+    int time_quantum;
 };
 
-#endif
+#endif // SCHEDULER_H

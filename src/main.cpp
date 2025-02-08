@@ -3,58 +3,61 @@
 #include "process.h"
 #include "scheduler.h"
 
+using namespace std;
+
+void getProcessesFromUser(vector<Process>& processes) {
+    int num_processes;
+    cout << "Enter the number of processes: ";
+    cin >> num_processes;
+
+    for (int i = 0; i < num_processes; ++i) {
+        int arrival_time, burst_time, priority;
+        cout << "Enter Arrival Time, Burst Time, and Priority (for Process " << i + 1 << "): ";
+        cin >> arrival_time >> burst_time >> priority;
+        processes.push_back(Process(i + 1, arrival_time, burst_time, priority));
+    }
+}
+
 int main() {
-    std::vector<Process> processes;
-    int n, choice, quantum;
+    vector<Process> processes;
+    getProcessesFromUser(processes);
 
-    // Get the number of processes from the user
-    std::cout << "Enter the number of processes: ";
-    std::cin >> n;
+    int choice;
+    cout << "Choose a Scheduling Algorithm:\n";
+    cout << "1. FCFS\n";
+    cout << "2. SJF\n";
+    cout << "3. Priority Scheduling\n";
+    cout << "4. Round Robin\n";
+    cout << "Enter your choice (1-4): ";
+    cin >> choice;
 
-    // Input details for each process
-    for (int i = 0; i < n; i++) {
-        int at, bt, prio;
-        std::cout << "\nEnter details for process " << i + 1 << ":\n";
-        std::cout << "Arrival Time: ";
-        std::cin >> at;
-        std::cout << "Burst Time: ";
-        std::cin >> bt;
-        std::cout << "Priority: ";
-        std::cin >> prio;
+    Scheduler* scheduler = nullptr;
 
-        // Create a Process object and add it to the vector
-        processes.emplace_back(i + 1, at, bt, prio);
+    switch (choice) {
+        case 1:
+            scheduler = new FCFS();
+            break;
+        case 2:
+            scheduler = new SJF();
+            break;
+        case 3:
+            scheduler = new PriorityScheduling();
+            break;
+        case 4:
+            int time_quantum;
+            cout << "Enter the Time Quantum for Round Robin: ";
+            cin >> time_quantum;
+            scheduler = new RoundRobin(time_quantum);
+            break;
+        default:
+            cout << "Invalid choice! Exiting...\n";
+            return 1;
     }
 
-    // Choose scheduling algorithm
-    std::cout << "\nChoose scheduling algorithm:\n";
-    std::cout << "1. FCFS\n";
-    std::cout << "2. SJF\n";
-    std::cout << "3. Round Robin\n";
-    std::cout << "Enter your choice: ";
-    std::cin >> choice;
+    scheduler->schedule(processes);
+    scheduler->printMetrics(processes);
+    scheduler->printGanttChart(processes);
 
-    // Run the selected scheduler
-    if (choice == 1) {
-        FCFS fcfs;
-        fcfs.schedule(processes);
-        fcfs.printGanttChart();
-        fcfs.printMetrics();
-    } else if (choice == 2) {
-        SJF sjf;
-        sjf.schedule(processes);
-        sjf.printGanttChart();
-        sjf.printMetrics();
-    } else if (choice == 3) {
-        std::cout << "Enter the time quantum for Round Robin: ";
-        std::cin >> quantum;
-        RR rr(quantum);
-        rr.schedule(processes);
-        rr.printGanttChart();
-        rr.printMetrics();
-    } else {
-        std::cout << "Invalid choice!\n";
-    }
-
+    delete scheduler;  // Clean up memory
     return 0;
 }
