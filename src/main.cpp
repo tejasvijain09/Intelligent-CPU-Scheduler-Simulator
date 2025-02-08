@@ -5,7 +5,7 @@
 
 int main() {
     std::vector<Process> processes;
-    int n, choice;
+    int n, choice, quantum;
 
     // Get the number of processes from the user
     std::cout << "Enter the number of processes: ";
@@ -13,7 +13,7 @@ int main() {
 
     // Input details for each process
     for (int i = 0; i < n; i++) {
-        int  at, bt, prio;
+        int at, bt, prio;
         std::cout << "\nEnter details for process " << i + 1 << ":\n";
         std::cout << "Arrival Time: ";
         std::cin >> at;
@@ -30,6 +30,7 @@ int main() {
     std::cout << "\nChoose scheduling algorithm:\n";
     std::cout << "1. FCFS\n";
     std::cout << "2. SJF\n";
+    std::cout << "3. Round Robin\n";
     std::cout << "Enter your choice: ";
     std::cin >> choice;
 
@@ -44,6 +45,13 @@ int main() {
         sjf.schedule(processes);
         sjf.printGanttChart();
         sjf.printMetrics();
+    } else if (choice == 3) {
+        std::cout << "Enter the time quantum for Round Robin: ";
+        std::cin >> quantum;
+        RR rr(quantum);
+        rr.schedule(processes);
+        rr.printGanttChart();
+        rr.printMetrics();
     } else {
         std::cout << "Invalid choice!\n";
     }

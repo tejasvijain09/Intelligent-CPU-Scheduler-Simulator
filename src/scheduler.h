@@ -7,8 +7,6 @@
 class Scheduler {
 public:
     virtual void schedule(std::vector<Process>& processes) = 0;
-
-    // These need to be defined in the cpp file
     void printGanttChart();
     void printMetrics();
 
@@ -20,14 +18,23 @@ protected:
 
 class FCFS : public Scheduler {
 public:
-    FCFS();  // Constructor declaration
+    FCFS();
     void schedule(std::vector<Process>& processes) override;
 };
 
 class SJF : public Scheduler {
 public:
-    SJF();  // Constructor declaration for SJF
+    SJF();
     void schedule(std::vector<Process>& processes) override;
+};
+
+class RR : public Scheduler {
+public:
+    RR(int quantum);
+    void schedule(std::vector<Process>& processes) override;
+
+private:
+    int quantum;  // Time quantum for round robin scheduling
 };
 
 #endif
