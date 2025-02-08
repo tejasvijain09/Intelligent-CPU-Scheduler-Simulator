@@ -5,7 +5,7 @@
 
 int main() {
     std::vector<Process> processes;
-    int n;
+    int n, choice;
 
     // Get the number of processes from the user
     std::cout << "Enter the number of processes: ";
@@ -13,7 +13,7 @@ int main() {
 
     // Input details for each process
     for (int i = 0; i < n; i++) {
-        int at, bt, prio;
+        int  at, bt, prio;
         std::cout << "\nEnter details for process " << i + 1 << ":\n";
         std::cout << "Arrival Time: ";
         std::cin >> at;
@@ -21,19 +21,32 @@ int main() {
         std::cin >> bt;
         std::cout << "Priority: ";
         std::cin >> prio;
-    
+
         // Create a Process object and add it to the vector
         processes.emplace_back(i + 1, at, bt, prio);
     }
-    
 
-    // Run FCFS Scheduling
-    FCFS fcfs;
-    fcfs.schedule(processes);
+    // Choose scheduling algorithm
+    std::cout << "\nChoose scheduling algorithm:\n";
+    std::cout << "1. FCFS\n";
+    std::cout << "2. SJF\n";
+    std::cout << "Enter your choice: ";
+    std::cin >> choice;
 
-    // Display results
-    fcfs.printGanttChart();
-    fcfs.printMetrics();
+    // Run the selected scheduler
+    if (choice == 1) {
+        FCFS fcfs;
+        fcfs.schedule(processes);
+        fcfs.printGanttChart();
+        fcfs.printMetrics();
+    } else if (choice == 2) {
+        SJF sjf;
+        sjf.schedule(processes);
+        sjf.printGanttChart();
+        sjf.printMetrics();
+    } else {
+        std::cout << "Invalid choice!\n";
+    }
 
     return 0;
 }
