@@ -4,48 +4,66 @@
 #include <vector>
 #include "process.h"
 
-class Scheduler {
+// Abstract base class for scheduling algorithms
+class SchedulingAlgorithm {
 public:
     virtual void schedule(std::vector<Process>& processes) = 0;
-    virtual void printMetrics(const std::vector<Process>& processes) = 0;
-    virtual void printGanttChart(const std::vector<Process>& processes) = 0;
-    virtual ~Scheduler() = default;
+    virtual void printGanttChart() = 0;
+    virtual void printMetrics(std::vector<Process>& processes) = 0;
+    virtual ~SchedulingAlgorithm() = default; // Virtual destructor for cleanup
+
+protected:
+    // This vector will store the execution sequence (process IDs)
+    std::vector<int> gantt;
 };
 
-// FCFS Scheduling Algorithm
-class FCFS : public Scheduler {
+class FCFS : public SchedulingAlgorithm {
 public:
     void schedule(std::vector<Process>& processes) override;
-    void printMetrics(const std::vector<Process>& processes) override;
-    void printGanttChart(const std::vector<Process>& processes) override;
+    void printGanttChart() override;
+    void printMetrics(std::vector<Process>& processes) override;
 };
 
-// SJF Scheduling Algorithm
-class SJF : public Scheduler {
+class SJF : public SchedulingAlgorithm {
 public:
     void schedule(std::vector<Process>& processes) override;
-    void printMetrics(const std::vector<Process>& processes) override;
-    void printGanttChart(const std::vector<Process>& processes) override;
+    void printGanttChart() override;
+    void printMetrics(std::vector<Process>& processes) override;
 };
 
-// Priority Scheduling Algorithm
-class PriorityScheduling : public Scheduler {
+class PreemptiveSJF : public SchedulingAlgorithm {
 public:
+    PreemptiveSJF();  // Constructor declaration
     void schedule(std::vector<Process>& processes) override;
-    void printMetrics(const std::vector<Process>& processes) override;
-    void printGanttChart(const std::vector<Process>& processes) override;
+    void printGanttChart() override;
+    void printMetrics(std::vector<Process>& processes) override;
 };
 
-// Round Robin Scheduling Algorithm
-class RoundRobin : public Scheduler {
+class PriorityScheduling : public SchedulingAlgorithm {
 public:
-    RoundRobin(int time_quantum);
+    PriorityScheduling();  // Constructor declaration
     void schedule(std::vector<Process>& processes) override;
-    void printMetrics(const std::vector<Process>& processes) override;
-    void printGanttChart(const std::vector<Process>& processes) override;
+    void printGanttChart() override;
+    void printMetrics(std::vector<Process>& processes) override;
+};
 
+class PreemptivePriorityScheduling : public SchedulingAlgorithm {
+public:
+    PreemptivePriorityScheduling();  // Constructor declaration
+    void schedule(std::vector<Process>& processes) override;
+    void printGanttChart() override;
+    void printMetrics(std::vector<Process>& processes) override;
+};
+
+class RoundRobin : public SchedulingAlgorithm {
 private:
-    int time_quantum;
+    int time_quantum;  // Member variable to store the time quantum
+
+public:
+    RoundRobin(int tq) : time_quantum(tq) {}  // Constructor to initialize time_quantum
+    void schedule(std::vector<Process>& processes) override;
+    void printGanttChart() override;
+    void printMetrics(std::vector<Process>& processes) override;
 };
 
 #endif // SCHEDULER_H
