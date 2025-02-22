@@ -54,9 +54,12 @@ int main() {
             return 1;
     }
 
+    // Schedule processes and print metrics
     scheduler->schedule(processes);
     scheduler->printMetrics(processes);
-    scheduler->printGanttChart(processes);
+
+    // Visualize the Gantt chart
+    scheduler->visualizeGanttChart(processes, "Gantt Chart");
 
     delete scheduler;  // Clean up memory
     return 0;
