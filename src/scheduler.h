@@ -3,50 +3,76 @@
 
 #include <vector>
 #include "process.h"
-#include <SFML/Graphics.hpp>
+#include "matplotlibcpp.h"  // Include Matplotlib for visualization
 
-class Scheduler {
-public:
-    virtual void schedule(std::vector<Process>& processes) = 0;
-    virtual void printMetrics(const std::vector<Process>& processes) = 0;
-    virtual void visualizeGanttChart(const std::vector<Process>& processes, const std::string& title) = 0;
-    virtual ~Scheduler() = default;
-};
+namespace plt = matplotlibcpp;
 
-// FCFS Scheduling Algorithm
-class FCFS : public Scheduler {
-public:
-    void schedule(std::vector<Process>& processes) override;
-    void printMetrics(const std::vector<Process>& processes) override;
-    void visualizeGanttChart(const std::vector<Process>& processes, const std::string& title) override;
-};
+// Abstract base class for scheduling algorithms
+class SchedulingAlgorithm {
+    public:
+        virtual void schedule(std::vector<Process>& processes) = 0;
+        virtual void printGanttChart() = 0;
+        virtual void plotGanttChart() = 0;
+        
+        // ✅ Make printMetrics a virtual function with override
+        virtual void printMetrics(const std::vector<Process>& processes) ;
+    
+        virtual ~SchedulingAlgorithm() = default;
+    
+    protected:
+        std::vector<std::pair<int, int>> gantt_chart;
+    };
 
-// SJF Scheduling Algorithm
-class SJF : public Scheduler {
-public:
-    void schedule(std::vector<Process>& processes) override;
-    void printMetrics(const std::vector<Process>& processes) override;
-    void visualizeGanttChart(const std::vector<Process>& processes, const std::string& title) override;
-};
-
-// Priority Scheduling Algorithm
-class PriorityScheduling : public Scheduler {
+// All scheduling algorithms
+class FCFS : public SchedulingAlgorithm {
 public:
     void schedule(std::vector<Process>& processes) override;
+    void printGanttChart() override;
+    void plotGanttChart() override;
     void printMetrics(const std::vector<Process>& processes) override;
-    void visualizeGanttChart(const std::vector<Process>& processes, const std::string& title) override;
 };
 
-// Round Robin Scheduling Algorithm
-class RoundRobin : public Scheduler {
+class SJF : public SchedulingAlgorithm {
 public:
-    RoundRobin(int time_quantum);
     void schedule(std::vector<Process>& processes) override;
+    void printGanttChart() override;
+    void plotGanttChart() override;
     void printMetrics(const std::vector<Process>& processes) override;
-    void visualizeGanttChart(const std::vector<Process>& processes, const std::string& title) override;
-
-private:
-    int time_quantum;
 };
+
+class PreemptiveSJF : public SchedulingAlgorithm {
+public:
+    void schedule(std::vector<Process>& processes) override;
+    void printGanttChart() override;
+    void plotGanttChart() override;
+    void printMetrics(const std::vector<Process>& processes) override;
+};
+
+class PriorityScheduling : public SchedulingAlgorithm {
+public:
+    void schedule(std::vector<Process>& processes) override;
+    void printGanttChart() override;
+    void plotGanttChart() override;
+    void printMetrics(const std::vector<Process>& processes) override;
+};
+
+class PreemptivePriorityScheduling : public SchedulingAlgorithm {
+public:
+    void schedule(std::vector<Process>& processes) override;
+    void printGanttChart() override;
+    void plotGanttChart() override;
+    void printMetrics(const std::vector<Process>& processes) override;
+};
+
+class RoundRobin : public SchedulingAlgorithm {
+    private:
+        int time_quantum;
+    public:
+        explicit RoundRobin(int tq) : time_quantum(tq) {}
+        void schedule(std::vector<Process>& processes) override;
+        void printGanttChart() override;
+        void plotGanttChart() override;
+    };
+    
 
 #endif // SCHEDULER_H

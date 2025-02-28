@@ -1,232 +1,294 @@
 #include "scheduler.h"
-#include <SFML/Graphics.hpp>
 #include <iostream>
-#include <algorithm>
 #include <queue>
-#include <optional>
+#include <algorithm>
+#include <iomanip>
 
-using namespace std;
+//------------------------------------------------------------
+// Helper Function to Print Gantt Chart
+void SchedulingAlgorithm::printGanttChart() {
+    std::cout << "\nGantt Chart:\n";
+    std::cout << "--------------------------------------------------\n";
+    int time = 0;
+    for (const auto& segment : gantt_chart) {
+        std::cout << "| P" << segment.first << " ";
+        time += segment.second;
+    }
+    std::cout << "|\n--------------------------------------------------\n";
 
-// Helper function to visualize Gantt chart
-void visualizeGanttChart(const vector<Process>& processes, const string& title) {
-    // Create window with SFML 3.0-compatible VideoMode
-    sf::RenderWindow window(sf::VideoMode(sf::Vector2u(800, 200)), title);
-    window.setFramerateLimit(60);
+    time = 0;
+    for (const auto& segment : gantt_chart) {
+        std::cout << time << "\t";
+        time += segment.second;
+    }
+    std::cout << time << "\n";
+}
 
-    // Load font
-    sf::Font font;
-    if (!font.openFromFile("arial.ttf")) {
-        cerr << "Error loading font!" << endl;
-        return;
+//------------------------------------------------------------
+// Helper Function to Plot Gantt Chart
+void SchedulingAlgorithm::plotGanttChart() {
+    std::vector<double> x;
+    std::vector<double> y;
+    std::vector<std::string> labels;
+
+    double time = 0;
+    for (const auto& segment : gantt_chart) {
+        x.push_back(time);
+        y.push_back(segment.first);
+        labels.push_back("P" + std::to_string(segment.first));
+        time += segment.second;
     }
 
-    // Calculate total simulation time
-    int total_time = 0;
+    plt::bar(x, y);
+    plt::xticks(x, labels);
+    plt::title("Gantt Chart Visualization");
+    plt::xlabel("Time");
+    plt::ylabel("Process ID");
+    plt::show();
+} 
+//------------------------------------------------------------
+// Helper Function to Print Metrics
+void SchedulingAlgorithm::printMetrics(const std::vector<Process>& processes) {
+    std::cout << "\nProcess\tArrival Time\tBurst Time\tWaiting Time\tTurnaround Time\n";
     for (const auto& process : processes) {
-        total_time = max(total_time, process.getTurnaroundTime());
-    }
-
-    // Define parameters for Gantt chart
-    const float bar_height = 30.0f;
-    const float bar_spacing = 10.0f;
-    const float margin = 50.0f;
-    const float time_scale = 700.0f / total_time;
-
-    // Main loop
-    while (window.isOpen()) {
-        // Handle events with std::optional
-        while (std::optional<sf::Event> event = window.pollEvent()) {
-            if (event->type == sf::Event::Closed) {
-                window.close();
-            }
-        }
-
-        // Clear the window
-        window.clear(sf::Color::White);
-
-        // Draw Gantt bars
-        float x = margin;
-        for (const auto& process : processes) {
-            // Calculate bar dimensions
-            float bar_width = process.getBurstTime() * time_scale;
-
-            // Draw process bar
-            sf::RectangleShape bar(sf::Vector2f(bar_width, bar_height));
-            bar.setPosition(sf::Vector2f(x, margin));
-            bar.setFillColor(process.getColor());  // Use process-specific color
-            window.draw(bar);
-
-            // Draw process ID label
-            sf::Text text("", font, 16);  // Initialize with font, string, and character size
-            text.setString("P" + to_string(process.getId()));
-            text.setFillColor(sf::Color::Black);
-            text.setPosition(sf::Vector2f(x + 5, margin + 5));
-            window.draw(text);
-
-            // Update x position for the next bar
-            x += bar_width + bar_spacing;
-        }
-
-        // Draw timeline
-        sf::VertexArray timeline(sf::PrimitiveType::Lines, 2);
-        timeline[0].position = sf::Vector2f(margin, margin + bar_height + 10);
-        timeline[1].position = sf::Vector2f(margin + 700, margin + bar_height + 10);
-        timeline[0].color = sf::Color::Black;
-        timeline[1].color = sf::Color::Black;
-        window.draw(timeline);
-
-        // Draw time markers
-        for (int t = 0; t <= total_time; t += 5) {
-            float marker_x = margin + t * time_scale;
-
-            // Draw marker line
-            sf::VertexArray marker(sf::PrimitiveType::Lines, 2);
-            marker[0].position = sf::Vector2f(marker_x, margin + bar_height + 5);
-            marker[1].position = sf::Vector2f(marker_x, margin + bar_height + 15);
-            marker[0].color = sf::Color::Black;
-            marker[1].color = sf::Color::Black;
-            window.draw(marker);
-
-            // Draw time label
-            sf::Text time_text("", font, 12);  // Initialize with font, string, and character size
-            time_text.setString(to_string(t));
-            time_text.setFillColor(sf::Color::Black);
-            time_text.setPosition(sf::Vector2f(marker_x - 5, margin + bar_height + 20));
-            window.draw(time_text);
-        }
-
-        // Display the window
-        window.display();
+        std::cout << "P" << process.getId() << "\t"
+                  << process.getArrivalTime() << "\t\t"
+                  << process.getBurstTime() << "\t\t"
+                  << process.getWaitingTime() << "\t\t"
+                  << process.getTurnaroundTime() << "\n";
     }
 }
 
-// FCFS Algorithm
-void FCFS::schedule(vector<Process>& processes) {
-    sort(processes.begin(), processes.end(), [](const Process& a, const Process& b) {
-        return a.getArrivalTime() < b.getArrivalTime();
-    });
-
+//------------------------------------------------------------
+// FCFS Implementation
+void FCFS::schedule(std::vector<Process>& processes) {
+    gantt_chart.clear();
     int current_time = 0;
+
     for (auto& process : processes) {
-        process.setWaitingTime(current_time - process.getArrivalTime());
-        process.setTurnaroundTime(process.getWaitingTime() + process.getBurstTime());
+        if (current_time < process.getArrivalTime())
+            current_time = process.getArrivalTime();
+
+        process.setStartTime(current_time);
         current_time += process.getBurstTime();
+        process.setFinishTime(current_time);
+        process.setTurnaroundTime(process.getFinishTime() - process.getArrivalTime());
+        process.setWaitingTime(process.getStartTime() - process.getArrivalTime());
+
+        gantt_chart.push_back({process.getId(), process.getBurstTime()});
     }
 }
 
-void FCFS::printMetrics(const vector<Process>& processes) {
-    int total_waiting_time = 0;
-    int total_turnaround_time = 0;
-    for (const auto& process : processes) {
-        total_waiting_time += process.getWaitingTime();
-        total_turnaround_time += process.getTurnaroundTime();
-    }
-    cout << "FCFS - Average Waiting Time: " << total_waiting_time / processes.size() << endl;
-    cout << "FCFS - Average Turnaround Time: " << total_turnaround_time / processes.size() << endl;
-}
-
-void FCFS::visualizeGanttChart(const vector<Process>& processes, const string& title) {
-    ::visualizeGanttChart(processes, title);
-}
-
-// SJF Algorithm
-void SJF::schedule(vector<Process>& processes) {
-    sort(processes.begin(), processes.end(), [](const Process& a, const Process& b) {
+//------------------------------------------------------------
+// Shortest Job First (Non-Preemptive)
+void SJF::schedule(std::vector<Process>& processes) {
+    gantt_chart.clear();
+    std::sort(processes.begin(), processes.end(), [](const Process& a, const Process& b) {
         return a.getBurstTime() < b.getBurstTime();
     });
 
     int current_time = 0;
     for (auto& process : processes) {
-        process.setWaitingTime(current_time - process.getArrivalTime());
-        process.setTurnaroundTime(process.getWaitingTime() + process.getBurstTime());
+        if (current_time < process.getArrivalTime())
+            current_time = process.getArrivalTime();
+
+        process.setStartTime(current_time);
         current_time += process.getBurstTime();
+        process.setFinishTime(current_time);
+        process.setTurnaroundTime(process.getFinishTime() - process.getArrivalTime());
+        process.setWaitingTime(process.getStartTime() - process.getArrivalTime());
+
+        gantt_chart.push_back({process.getId(), process.getBurstTime()});
     }
 }
 
-void SJF::printMetrics(const vector<Process>& processes) {
-    int total_waiting_time = 0;
-    int total_turnaround_time = 0;
-    for (const auto& process : processes) {
-        total_waiting_time += process.getWaitingTime();
-        total_turnaround_time += process.getTurnaroundTime();
+//------------------------------------------------------------
+// Preemptive Shortest Job First (SJF)
+void PreemptiveSJF::schedule(std::vector<Process>& processes) {
+    gantt_chart.clear();
+    std::sort(processes.begin(), processes.end(), [](const Process& a, const Process& b) {
+        return a.getArrivalTime() < b.getArrivalTime();
+    });
+
+    auto cmp = [](Process* a, Process* b) { return a->getRemainingTime() > b->getRemainingTime(); };
+    std::priority_queue<Process*, std::vector<Process*>, decltype(cmp)> ready_queue(cmp);
+
+    int current_time = 0, completed = 0;
+    size_t idx = 0;
+
+    while (completed < processes.size()) {
+        while (idx < processes.size() && processes[idx].getArrivalTime() <= current_time) {
+            ready_queue.push(&processes[idx]);
+            idx++;
+        }
+
+        if (!ready_queue.empty()) {
+            Process* proc = ready_queue.top();
+            ready_queue.pop();
+            proc->setRemainingTime(proc->getRemainingTime() - 1);
+            gantt_chart.push_back({proc->getId(), 1});
+            current_time++;
+
+            if (proc->getRemainingTime() == 0) {
+                proc->setFinishTime(current_time);
+                proc->setTurnaroundTime(proc->getFinishTime() - proc->getArrivalTime());
+                proc->setWaitingTime(proc->getTurnaroundTime() - proc->getBurstTime());
+                completed++;
+            } else {
+                ready_queue.push(proc);
+            }
+        } else {
+            current_time++;
+        }
     }
-    cout << "SJF - Average Waiting Time: " << total_waiting_time / processes.size() << endl;
-    cout << "SJF - Average Turnaround Time: " << total_turnaround_time / processes.size() << endl;
 }
 
-void SJF::visualizeGanttChart(const vector<Process>& processes, const string& title) {
-    ::visualizeGanttChart(processes, title);
-}
-
-// Priority Scheduling Algorithm
-void PriorityScheduling::schedule(vector<Process>& processes) {
-    sort(processes.begin(), processes.end(), [](const Process& a, const Process& b) {
+//------------------------------------------------------------
+// Priority Scheduling (Non-Preemptive)
+void PriorityScheduling::schedule(std::vector<Process>& processes) {
+    gantt_chart.clear();
+    std::sort(processes.begin(), processes.end(), [](const Process& a, const Process& b) {
         return a.getPriority() < b.getPriority();
     });
 
     int current_time = 0;
     for (auto& process : processes) {
-        process.setWaitingTime(current_time - process.getArrivalTime());
-        process.setTurnaroundTime(process.getWaitingTime() + process.getBurstTime());
+        if (current_time < process.getArrivalTime())
+            current_time = process.getArrivalTime();
+
+        process.setStartTime(current_time);
         current_time += process.getBurstTime();
+        process.setFinishTime(current_time);
+        process.setTurnaroundTime(process.getFinishTime() - process.getArrivalTime());
+        process.setWaitingTime(process.getStartTime() - process.getArrivalTime());
+
+        gantt_chart.push_back({process.getId(), process.getBurstTime()});
     }
 }
 
-void PriorityScheduling::printMetrics(const vector<Process>& processes) {
-    int total_waiting_time = 0;
-    int total_turnaround_time = 0;
-    for (const auto& process : processes) {
-        total_waiting_time += process.getWaitingTime();
-        total_turnaround_time += process.getTurnaroundTime();
-    }
-    cout << "Priority Scheduling - Average Waiting Time: " << total_waiting_time / processes.size() << endl;
-    cout << "Priority Scheduling - Average Turnaround Time: " << total_turnaround_time / processes.size() << endl;
-}
+//------------------------------------------------------------
+// Preemptive Priority Scheduling
+void PreemptivePriorityScheduling::schedule(std::vector<Process>& processes) {
+    gantt_chart.clear();
+    std::sort(processes.begin(), processes.end(), [](const Process& a, const Process& b) {
+        return a.getArrivalTime() < b.getArrivalTime();
+    });
 
-void PriorityScheduling::visualizeGanttChart(const vector<Process>& processes, const string& title) {
-    ::visualizeGanttChart(processes, title);
-}
+    auto cmp = [](Process* a, Process* b) { return a->getPriority() > b->getPriority(); };
+    std::priority_queue<Process*, std::vector<Process*>, decltype(cmp)> ready_queue(cmp);
 
-// Round Robin Scheduling Algorithm
-RoundRobin::RoundRobin(int time_quantum) : time_quantum(time_quantum) {}
+    int current_time = 0, completed = 0;
+    size_t idx = 0;
 
-void RoundRobin::schedule(vector<Process>& processes) {
-    queue<Process*> ready_queue;
-    int current_time = 0;
+    while (completed < processes.size()) {
+        while (idx < processes.size() && processes[idx].getArrivalTime() <= current_time) {
+            ready_queue.push(&processes[idx]);
+            idx++;
+        }
 
-    for (auto& process : processes) {
-        process.setRemainingTime(process.getBurstTime());
-        ready_queue.push(&process);
-    }
+        if (!ready_queue.empty()) {
+            Process* proc = ready_queue.top();
+            ready_queue.pop();
+            proc->setRemainingTime(proc->getRemainingTime() - 1);
+            gantt_chart.push_back({proc->getId(), 1});
+            current_time++;
 
-    while (!ready_queue.empty()) {
-        Process* process = ready_queue.front();
-        ready_queue.pop();
-
-        if (process->getRemainingTime() > time_quantum) {
-            process->setRemainingTime(process->getRemainingTime() - time_quantum);
-            current_time += time_quantum;
-            ready_queue.push(process);
+            if (proc->getRemainingTime() == 0) {
+                proc->setFinishTime(current_time);
+                proc->setTurnaroundTime(proc->getFinishTime() - proc->getArrivalTime());
+                proc->setWaitingTime(proc->getTurnaroundTime() - proc->getBurstTime());
+                completed++;
+            } else {
+                ready_queue.push(proc);
+            }
         } else {
-            current_time += process->getRemainingTime();
-            process->setWaitingTime(current_time - process->getBurstTime() - process->getArrivalTime());
-            process->setTurnaroundTime(process->getWaitingTime() + process->getBurstTime());
-            process->setRemainingTime(0);
+            current_time++;
         }
     }
 }
 
-void RoundRobin::printMetrics(const vector<Process>& processes) {
-    int total_waiting_time = 0;
-    int total_turnaround_time = 0;
-    for (const auto& process : processes) {
-        total_waiting_time += process.getWaitingTime();
-        total_turnaround_time += process.getTurnaroundTime();
-    }
-    cout << "Round Robin - Average Waiting Time: " << total_waiting_time / processes.size() << endl;
-    cout << "Round Robin - Average Turnaround Time: " << total_turnaround_time / processes.size() << endl;
-}
+//------------------------------------------------------------
+// Round Robin Scheduling
+void RoundRobin::schedule(std::vector<Process>& processes) {
+    gantt_chart.clear();
+    std::queue<Process*> ready_queue;
+    int current_time = 0;
 
-void RoundRobin::visualizeGanttChart(const vector<Process>& processes, const string& title) {
-    ::visualizeGanttChart(processes, title);
+    for (auto& process : processes) {
+        process.setRemainingTime(process.getBurstTime());
+    }
+
+    size_t idx = 0;
+    while (idx < processes.size() || !ready_queue.empty()) {
+        while (idx < processes.size() && processes[idx].getArrivalTime() <= current_time) {
+            ready_queue.push(&processes[idx]);
+            idx++;
+        }
+
+        if (!ready_queue.empty()) {
+            Process* proc = ready_queue.front();
+            ready_queue.pop();
+            int exec_time = std::min(time_quantum, proc->getRemainingTime());
+            gantt_chart.push_back({proc->getId(), exec_time});
+            current_time += exec_time;
+            proc->setRemainingTime(proc->getRemainingTime() - exec_time);
+
+            if (proc->getRemainingTime() > 0) {
+                ready_queue.push(proc);
+            }
+        } else {
+            current_time++;
+        }
+    }
+}
+void RoundRobin::plotGanttChart() {
+    SchedulingAlgorithm::plotGanttChart();  // Call base class function
+}
+void RoundRobin::printGanttChart() {
+    SchedulingAlgorithm::printGanttChart();  // Call base class function
+}
+void PreemptiveSJF::printMetrics(const std::vector<Process>& processes) {
+    SchedulingAlgorithm::printMetrics(processes);  // Call base class function
+}
+void PreemptiveSJF::plotGanttChart() {
+    SchedulingAlgorithm::plotGanttChart();  // Call base class function
+}
+void PreemptiveSJF::printGanttChart() {
+    SchedulingAlgorithm::printGanttChart();  // Call base class function
+}
+void PriorityScheduling::printMetrics(const std::vector<Process>& processes) {
+    SchedulingAlgorithm::printMetrics(processes);  // Call base class function
+}
+void PriorityScheduling::plotGanttChart() {
+    SchedulingAlgorithm::plotGanttChart();  // Call base class function
+}
+void PriorityScheduling::printGanttChart() {
+    SchedulingAlgorithm::printGanttChart();  // Call base class function
+}
+void PreemptivePriorityScheduling::printGanttChart() {
+    SchedulingAlgorithm::printGanttChart();  // Use base class function
+}
+void PreemptivePriorityScheduling::plotGanttChart() {
+    SchedulingAlgorithm::plotGanttChart();  // Use base class function
+}
+void PreemptivePriorityScheduling::printMetrics(const std::vector<Process>& processes) {
+    SchedulingAlgorithm::printMetrics(processes);  // Use base class function
+}
+void SJF::printGanttChart() {
+    SchedulingAlgorithm::printGanttChart();  // Use base class function
+}
+void SJF::plotGanttChart() {
+    SchedulingAlgorithm::plotGanttChart();  // Use base class function
+}
+void SJF::printMetrics(const std::vector<Process>& processes) {
+    SchedulingAlgorithm::printMetrics(processes);  // Use base class function
+}
+void FCFS::printGanttChart() {
+    SchedulingAlgorithm::printGanttChart();  // Use base class function
+}
+void FCFS::plotGanttChart() {
+    SchedulingAlgorithm::plotGanttChart();  // Use base class function
+}
+void FCFS::printMetrics(const std::vector<Process>& processes) {
+    SchedulingAlgorithm::printMetrics(processes);  // Use base class function
 }

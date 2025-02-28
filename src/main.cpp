@@ -1,66 +1,54 @@
 #include <iostream>
 #include <vector>
+#include <memory>
 #include "process.h"
 #include "scheduler.h"
 
-using namespace std;
-
-void getProcessesFromUser(vector<Process>& processes) {
-    int num_processes;
-    cout << "Enter the number of processes: ";
-    cin >> num_processes;
-
-    for (int i = 0; i < num_processes; ++i) {
-        int arrival_time, burst_time, priority;
-        cout << "Enter Arrival Time, Burst Time, and Priority (for Process " << i + 1 << "): ";
-        cin >> arrival_time >> burst_time >> priority;
-        processes.push_back(Process(i + 1, arrival_time, burst_time, priority));
-    }
-}
-
 int main() {
-    vector<Process> processes;
-    getProcessesFromUser(processes);
+    int num_processes;
+    std::cout << "Enter the number of processes: ";
+    std::cin >> num_processes;
 
+    std::vector<Process> processes;
+    for (int i = 0; i < num_processes; ++i) {
+        int arrival, burst, prio;
+        std::cout << "Process " << i + 1 << ":\n";
+        std::cout << "Arrival Time: "; std::cin >> arrival;
+        std::cout << "Burst Time: "; std::cin >> burst;
+        std::cout << "Priority: "; std::cin >> prio;
+        processes.emplace_back(i + 1, arrival, burst, prio);
+    }
+
+    std::cout << "Choose scheduling algorithm:\n";
+    std::cout << "1. FCFS\n2. SJF\n3. Preemptive SJF\n4. Priority Scheduling\n5. Preemptive Priority Scheduling\n6. Round Robin\n";
+    
     int choice;
-    cout << "Choose a Scheduling Algorithm:\n";
-    cout << "1. FCFS\n";
-    cout << "2. SJF\n";
-    cout << "3. Priority Scheduling\n";
-    cout << "4. Round Robin\n";
-    cout << "Enter your choice (1-4): ";
-    cin >> choice;
+    std::cin >> choice;
 
-    Scheduler* scheduler = nullptr;
+    std::unique_ptr<SchedulingAlgorithm> scheduler;
 
     switch (choice) {
-        case 1:
-            scheduler = new FCFS();
+        case 1: scheduler = std::make_unique<FCFS>(); break;
+        case 2: scheduler = std::make_unique<SJF>(); break;
+        case 3: scheduler = std::make_unique<PreemptiveSJF>(); break;
+        case 4: scheduler = std::make_unique<PriorityScheduling>(); break;
+        case 5: scheduler = std::make_unique<PreemptivePriorityScheduling>(); break;
+        case 6: {
+            int tq;
+            std::cout << "Enter time quantum: ";
+            std::cin >> tq;
+            scheduler = std::make_unique<RoundRobin>(tq);
             break;
-        case 2:
-            scheduler = new SJF();
-            break;
-        case 3:
-            scheduler = new PriorityScheduling();
-            break;
-        case 4:
-            int time_quantum;
-            cout << "Enter the Time Quantum for Round Robin: ";
-            cin >> time_quantum;
-            scheduler = new RoundRobin(time_quantum);
-            break;
+        }
         default:
-            cout << "Invalid choice! Exiting...\n";
+            std::cerr << "Invalid choice! Exiting...\n";
             return 1;
     }
 
-    // Schedule processes and print metrics
     scheduler->schedule(processes);
+    scheduler->printGanttChart();
+    scheduler->plotGanttChart(); // New visualization
     scheduler->printMetrics(processes);
 
-    // Visualize the Gantt chart
-    scheduler->visualizeGanttChart(processes, "Gantt Chart");
-
-    delete scheduler;  // Clean up memory
     return 0;
 }
