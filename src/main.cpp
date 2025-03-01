@@ -9,6 +9,11 @@ int main() {
     std::cout << "Enter the number of processes: ";
     std::cin >> num_processes;
 
+    if (num_processes <= 0) {
+        std::cerr << "Invalid number of processes! Exiting...\n";
+        return 1;
+    }
+
     std::cout << "Choose scheduling algorithm:\n";
     std::cout << "1. FCFS\n2. SJF\n3. Preemptive SJF\n4. Priority Scheduling\n5. Preemptive Priority Scheduling\n6. Round Robin\n";
     
@@ -19,14 +24,28 @@ int main() {
 
     std::vector<Process> processes;
     for (int i = 0; i < num_processes; ++i) {
-        int arrival, burst, prio = 0; // Default priority = 0 (ignored for non-priority algos)
-        
-        std::cout << "Process " << i + 1 << ":\n";
-        std::cout << "Arrival Time: "; std::cin >> arrival;
-        std::cout << "Burst Time: "; std::cin >> burst;
+        int arrival, burst, prio = 0; // Default priority = 0 (ignored for non-priority algorithms)
+
+        std::cout << "\nProcess " << i + 1 << ":\n";
+
+        do {
+            std::cout << "Arrival Time: ";
+            std::cin >> arrival;
+            if (arrival < 0) std::cerr << "Arrival time cannot be negative! Try again.\n";
+        } while (arrival < 0);
+
+        do {
+            std::cout << "Burst Time: ";
+            std::cin >> burst;
+            if (burst <= 0) std::cerr << "Burst time must be greater than zero! Try again.\n";
+        } while (burst <= 0);
 
         if (is_priority_scheduling) { // Ask for priority ONLY if needed
-            std::cout << "Priority: "; std::cin >> prio;
+            do {
+                std::cout << "Priority: ";
+                std::cin >> prio;
+                if (prio < 0) std::cerr << "Priority cannot be negative! Try again.\n";
+            } while (prio < 0);
         }
 
         processes.emplace_back(i + 1, arrival, burst, prio);
@@ -42,8 +61,11 @@ int main() {
         case 5: scheduler = std::make_unique<PreemptivePriorityScheduling>(); break;
         case 6: {
             int tq;
-            std::cout << "Enter time quantum: ";
-            std::cin >> tq;
+            do {
+                std::cout << "Enter time quantum: ";
+                std::cin >> tq;
+                if (tq <= 0) std::cerr << "Time quantum must be greater than zero! Try again.\n";
+            } while (tq <= 0);
             scheduler = std::make_unique<RoundRobin>(tq);
             break;
         }
@@ -56,6 +78,5 @@ int main() {
     scheduler->printGanttChart();
     scheduler->plotGanttChart(); // New visualization
     scheduler->printMetrics(processes);
-
     return 0;
 }

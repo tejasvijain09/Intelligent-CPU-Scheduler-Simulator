@@ -43,23 +43,22 @@ void SchedulingAlgorithm::plotGanttChart() {
     std::vector<double> y_positions;
     std::vector<std::string> labels;
 
-    // Adjusting for actual start time
-    double time = gantt_chart[0].first; // Start from first process arrival
+    double time = gantt_chart[0].first; // Start at the first process's arrival
     int y = 0;
 
     for (const auto& segment : gantt_chart) {
         if (segment.second <= 0) continue;
 
-        startTimes.push_back(time);
-        durations.push_back(segment.second);
-        y_positions.push_back(y);
+        startTimes.push_back(time);               // Start at the correct time
+        durations.push_back(segment.second);      // Process burst duration
+        y_positions.push_back(y);                 // Y-axis position
         labels.push_back("P" + std::to_string(segment.first));
 
-        time += segment.second;
+        time += segment.second; // Move to next time slot
         y++;
     }
 
-    //  Fixing Idle Time (CPU Gaps)
+    // Plotting the Gantt Chart (No idle blocks, just shifting)
     std::vector<double> xs, ys;
     double halfHeight = 0.25; // Controls bar thickness
 
@@ -84,17 +83,46 @@ void SchedulingAlgorithm::plotGanttChart() {
 
 
 
+
+
 //------------------------------------------------------------
 // Helper Function to Print Metrics
 void SchedulingAlgorithm::printMetrics(const std::vector<Process>& processes) {
-    std::cout << "\nProcess\tArrival Time\tBurst Time\tWaiting Time\tTurnaround Time\n";
+    double totalTAT = 0, totalWT = 0, totalRT = 0;
+    int totalBurstTime = 0, completionTime = 0;
+
+    std::cout << "\n===================================================================================\n";
+    std::cout << "| Process | Arrival | Burst | Priority | Finish | Turnaround | Waiting | Response |\n";
+    std::cout << "-----------------------------------------------------------------------------------\n";
+
     for (const auto& process : processes) {
-        std::cout << "P" << process.getId() << "\t"
-                  << process.getArrivalTime() << "\t\t"
-                  << process.getBurstTime() << "\t\t"
-                  << process.getWaitingTime() << "\t\t"
-                  << process.getTurnaroundTime() << "\n";
+        int tat = process.getFinishTime() - process.getArrivalTime();
+        int wt = tat - process.getBurstTime();
+        int rt = process.getStartTime() - process.getArrivalTime();
+
+        totalTAT += tat;
+        totalWT += wt;
+        totalRT += rt;
+        totalBurstTime += process.getBurstTime();
+        completionTime = std::max(completionTime, process.getFinishTime());
+
+        std::cout << "| " << std::setw(7) << "P" + std::to_string(process.getId()) 
+                  << " | " << std::setw(7) << process.getArrivalTime() 
+                  << " | " << std::setw(5) << process.getBurstTime() 
+                  << " | " << std::setw(8) << process.getPriority() 
+                  << " | " << std::setw(6) << process.getFinishTime() 
+                  << " | " << std::setw(10) << tat 
+                  << " | " << std::setw(7) << wt 
+                  << " | " << std::setw(8) << rt 
+                  << " |\n";
     }
+
+    std::cout << "===================================================================================\n";
+    std::cout << "Average Turnaround Time: " << std::fixed << std::setprecision(2) << (totalTAT / processes.size()) << "\n";
+    std::cout << "Average Waiting Time: " << std::fixed << std::setprecision(2) << (totalWT / processes.size()) << "\n";
+    std::cout << "Average Response Time: " << std::fixed << std::setprecision(2) << (totalRT / processes.size()) << "\n";
+    std::cout << "CPU Utilization: " << std::fixed << std::setprecision(2) 
+              << ((totalBurstTime / (double)completionTime) * 100) << "%\n";
 }
 
 //------------------------------------------------------------
@@ -279,12 +307,17 @@ void RoundRobin::schedule(std::vector<Process>& processes) {
         }
     }
 }
+
+
 void RoundRobin::plotGanttChart() {
     SchedulingAlgorithm::plotGanttChart();  // Call base class function
 }
 void RoundRobin::printGanttChart() {
     SchedulingAlgorithm::printGanttChart();  // Call base class function
 }
+// void RoundRobin::printMetrics(const std::vector<Process>& processes) {
+//     SchedulingAlgorithm::printMetrics(processes);  // Call base class function
+// }
 void PreemptiveSJF::printMetrics(const std::vector<Process>& processes) {
     SchedulingAlgorithm::printMetrics(processes);  // Call base class function
 }

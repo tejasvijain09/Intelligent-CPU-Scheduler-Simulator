@@ -4,7 +4,8 @@
 Process::Process(int id, int arrival, int burst, int prio)
     : id(id), arrival_time(arrival), burst_time(burst), priority(prio), 
       remaining_time(burst), start_time(-1), finish_time(-1), 
-      waiting_time(-1), turnaround_time(-1) {}
+      waiting_time(-1), turnaround_time(-1), 
+      completion_time(-1), response_time(-1) {} // ✅ Added completion_time & response_time
 
 // Getters
 int Process::getId() const {
@@ -43,6 +44,14 @@ int Process::getTurnaroundTime() const {
     return turnaround_time;
 }
 
+int Process::getCompletionTime() const { // ✅ New Getter
+    return completion_time;
+}
+
+int Process::getResponseTime() const { // ✅ New Getter
+    return response_time;
+}
+
 // Setters
 void Process::setRemainingTime(int time) {
     remaining_time = time;
@@ -62,4 +71,12 @@ void Process::setWaitingTime(int time) {
 
 void Process::setTurnaroundTime(int time) {
     turnaround_time = time;
+}
+
+void Process::setCompletionTime(int time) { // ✅ New Setter
+    completion_time = time;
+}
+
+void Process::setResponseTime(int time) { // ✅ New Setter
+    response_time = time;
 }
