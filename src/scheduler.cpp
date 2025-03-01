@@ -26,26 +26,64 @@ void SchedulingAlgorithm::printGanttChart() {
 
 //------------------------------------------------------------
 // Helper Function to Plot Gantt Chart
-void SchedulingAlgorithm::plotGanttChart() {
-    std::vector<double> x;
-    std::vector<double> y;
-    std::vector<std::string> labels;
+#include "matplotlibcpp.h"
 
-    double time = 0;
-    for (const auto& segment : gantt_chart) {
-        x.push_back(time);
-        y.push_back(segment.first);
-        labels.push_back("P" + std::to_string(segment.first));
-        time += segment.second;
+namespace plt = matplotlibcpp;
+
+//------------------------------------------------------------
+// Helper Function to Plot Gantt Chart (Updated)
+void SchedulingAlgorithm::plotGanttChart() {
+    if (gantt_chart.empty()) {
+        std::cerr << "Error: Gantt Chart is empty. Cannot plot." << std::endl;
+        return;
     }
 
-    plt::bar(x, y);
-    plt::xticks(x, labels);
-    plt::title("Gantt Chart Visualization");
+    std::vector<double> startTimes;
+    std::vector<double> durations;
+    std::vector<double> y_positions;
+    std::vector<std::string> labels;
+
+    // Adjusting for actual start time
+    double time = gantt_chart[0].first; // Start from first process arrival
+    int y = 0;
+
+    for (const auto& segment : gantt_chart) {
+        if (segment.second <= 0) continue;
+
+        startTimes.push_back(time);
+        durations.push_back(segment.second);
+        y_positions.push_back(y);
+        labels.push_back("P" + std::to_string(segment.first));
+
+        time += segment.second;
+        y++;
+    }
+
+    //  Fixing Idle Time (CPU Gaps)
+    std::vector<double> xs, ys;
+    double halfHeight = 0.25; // Controls bar thickness
+
+    for (size_t i = 0; i < y_positions.size(); i++) {
+        xs = {startTimes[i], startTimes[i] + durations[i],
+              startTimes[i] + durations[i], startTimes[i]};
+        ys = {y_positions[i] - halfHeight, y_positions[i] - halfHeight,
+              y_positions[i] + halfHeight, y_positions[i] + halfHeight};
+        plt::fill(xs, ys, {{"color", "skyblue"}});
+    }
+
+    plt::yticks(y_positions, labels);
     plt::xlabel("Time");
-    plt::ylabel("Process ID");
+    plt::ylabel("Processes");
+    plt::title("Gantt Chart for CPU Scheduling");
+    plt::grid(true);
+
     plt::show();
-} 
+}
+
+
+
+
+
 //------------------------------------------------------------
 // Helper Function to Print Metrics
 void SchedulingAlgorithm::printMetrics(const std::vector<Process>& processes) {

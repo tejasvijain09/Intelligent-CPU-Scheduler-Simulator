@@ -9,21 +9,28 @@ int main() {
     std::cout << "Enter the number of processes: ";
     std::cin >> num_processes;
 
-    std::vector<Process> processes;
-    for (int i = 0; i < num_processes; ++i) {
-        int arrival, burst, prio;
-        std::cout << "Process " << i + 1 << ":\n";
-        std::cout << "Arrival Time: "; std::cin >> arrival;
-        std::cout << "Burst Time: "; std::cin >> burst;
-        std::cout << "Priority: "; std::cin >> prio;
-        processes.emplace_back(i + 1, arrival, burst, prio);
-    }
-
     std::cout << "Choose scheduling algorithm:\n";
     std::cout << "1. FCFS\n2. SJF\n3. Preemptive SJF\n4. Priority Scheduling\n5. Preemptive Priority Scheduling\n6. Round Robin\n";
     
     int choice;
     std::cin >> choice;
+
+    bool is_priority_scheduling = (choice == 4 || choice == 5); // Only ask for priority in these cases
+
+    std::vector<Process> processes;
+    for (int i = 0; i < num_processes; ++i) {
+        int arrival, burst, prio = 0; // Default priority = 0 (ignored for non-priority algos)
+        
+        std::cout << "Process " << i + 1 << ":\n";
+        std::cout << "Arrival Time: "; std::cin >> arrival;
+        std::cout << "Burst Time: "; std::cin >> burst;
+
+        if (is_priority_scheduling) { // Ask for priority ONLY if needed
+            std::cout << "Priority: "; std::cin >> prio;
+        }
+
+        processes.emplace_back(i + 1, arrival, burst, prio);
+    }
 
     std::unique_ptr<SchedulingAlgorithm> scheduler;
 
