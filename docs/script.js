@@ -1,9 +1,9 @@
-import { calculateFCFS } from './algorithms/fcfs.js';
-import { calculateSJF } from './algorithms/sjf.js';
-import { calculateSRTF } from './algorithms/srtf.js';
-import { calculateRR } from './algorithms/roundRobin.js';
-import { calculatePriorityNP, calculatePriorityP } from './algorithms/priority.js';
-import { startLiveVisualization, togglePause, resetSimulation } from './visuallive.js';
+import { calculateFCFS } from '../src/algorithms/fcfs.js';
+import { calculateSJF } from '../src/algorithms/sjf.js';
+import { calculateSRTF } from '../src/algorithms/srtf.js';
+import { calculateRR } from '../src/algorithms/roundRobin.js';
+import { calculatePriorityNP, calculatePriorityP } from '../src/algorithms/priority.js';
+import { startLiveVisualization, togglePause, resetSimulation } from '../src/visuallive.js';
 
 // Make functions globally available
 window.lastResult = null;
