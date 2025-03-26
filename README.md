@@ -74,4 +74,4 @@ Contributions are welcome! If you have any suggestions or improvements, please c
 
 ## Resources
 - [GitHub Repository](https://github.com/tejasvijain09/Intelligent-CPU-Scheduler-Simulator.git)
-- [Konsept's GitHub Profile](https://github.com/tejasvijain09)
+- [Tejasvi's GitHub Profile](https://github.com/tejasvijain09)
